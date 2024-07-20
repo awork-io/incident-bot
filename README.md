@@ -36,6 +36,7 @@ Featuring a rich web management UI:
 - Handles organizing facts, documentation, and evidence - Automatically build a postmortem doc with a timeline, attach evidence, and collect relevant data
 - Integrates with your favorite tools
   - Confluence - Automatically format and create a postmortem document in Confluence
+  - Notion - Automatically format and create a postmortem document in Notion
   - Jira - Create and associate Issues for your incidents directly from the channel
   - PagerDuty & OpsGenie - Interact with teams and page or invite them to incidents
   - Statuspage - Create and manage a Statuspage incident directly within the Slack channel

@@ -19,7 +19,7 @@ Need support or just want to chat with us? Join us on [Discord](https://discord.
 - Automatically generate unique Zoom meetings for each incident and tell everyone about them.
 - Create Statuspage incidents.
 - Page teams in PagerDuty.
-- Automatically create a postmortem document in Confluence.
+- Automatically create a postmortem document in Confluence or Notion.
 - Create issues in Jira related to an incident.
 - Notify participants when they are assigned a role.
 - Automatically generate and manage a timeline of events.

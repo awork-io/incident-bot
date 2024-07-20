@@ -491,6 +491,89 @@ async def set_status(
                 logger.error(
                     f"Error sending postmortem update to incident channel: {error}"
                 )
+        
+        # Generate postmortem template and create postmortem if enabled
+        # Get normalized description as postmortem title
+        if ("notion" in config.active.integrations):
+            if (
+                config.active.integrations.get("notion")
+                .get("auto_create_postmortem")
+            ):
+                from bot.notion.postmortem import IncidentPostmortem
+
+                postmortem_title = f"{datetime.today().strftime('%Y-%m-%d')} - {incident_data.incident_id}"
+                postmortem = IncidentPostmortem(
+                    incident_id=incident_data.incident_id,
+                    postmortem_title=postmortem_title,
+                    incident_commander=actual_user_names[0],
+                    severity=incident_data.severity,
+                    severity_definition=config.active.severities[
+                        incident_data.severity
+                    ],
+                    pinned_items=read_incident_pinned_items(
+                        incident_id=incident_data.incident_id
+                    ),
+                    timeline=log.read(incident_id=incident_data.incident_id),
+                )
+                postmortem_link = postmortem.create()
+                db_update_incident_postmortem_col(
+                    channel_id=incident_data.channel_id,
+                    postmortem=postmortem_link,
+                )
+                # Write audit log
+                log.write(
+                    incident_id=incident_data.incident_id,
+                    event=f"Postmortem was automatically created: {postmortem_link}",
+                ),
+                postmortem_boilerplate_message_blocks.extend(
+                    [
+                        {
+                            "type": "section",
+                            "text": {
+                                "type": "mrkdwn",
+                                "text": "*I have created a base postmortem document that"
+                                " you can build on. You can open it using the button below.*",
+                            },
+                        },
+                        {
+                            "block_id": "buttons",
+                            "type": "actions",
+                            "elements": [
+                                {
+                                    "type": "button",
+                                    "text": {
+                                        "type": "plain_text",
+                                        "text": "View Postmortem In Notion",
+                                    },
+                                    "style": "primary",
+                                    "url": postmortem_link,
+                                    "action_id": "open_postmortem",
+                                },
+                            ],
+                        },
+                        {"type": "divider"},
+                    ]
+                )
+
+            # Send postmortem message to incident channel
+            try:
+                blocks = postmortem_boilerplate_message_blocks
+                result = slack_web_client.chat_postMessage(
+                    channel=incident_data.channel_id,
+                    blocks=blocks,
+                    text="",
+                )
+                logger.debug(f"\n{result}\n")
+
+                # Pin the postmortem message to the channel for quick access.
+                slack_web_client.pins_add(
+                    channel=incident_data.channel_id,
+                    timestamp=result.get("ts"),
+                )
+            except slack_sdk.errors.SlackApiError as error:
+                logger.error(
+                    f"Error sending postmortem update to incident channel: {error}"
+                )
 
         # Send message to incident channel
         try:
@@ -539,14 +622,15 @@ async def set_status(
                 postmortem_link=(
                     postmortem_link
                     if action_value == "resolved"
-                    and ("atlassian" in config.active.integrations)
+                    and (("atlassian" in config.active.integrations)
                     and "confluence"
                     in config.active.integrations.get("atlassian")
                     and (
                         config.active.integrations.get("atlassian")
                         .get("confluence")
                         .get("auto_create_postmortem")
-                    )
+                    )) or ("notion" in config.active.integrations
+                           and config.active.integrations.get("notion").get("auto_create_postmortem"))
                     else None
                 ),
             ),

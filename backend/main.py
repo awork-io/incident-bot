@@ -111,6 +111,20 @@ def startup_tasks():
         from bot.scheduler.scheduler import update_opsgenie_oc_data
 
         update_opsgenie_oc_data()
+    
+    if "notion" in config.active.integrations:
+        from bot.notion.api import NotionApi
+
+        api_test = NotionApi()
+        passes = api_test.test()
+        if not passes:
+            logger.fatal(
+                "Could not verify Notion parent page exists.\nYou provided: {}".format(
+                    config.active.integrations.get("notion")
+                    .get("parent"),
+                )
+            )
+            sys.exit(1)
 
     if "pagerduty" in config.active.integrations:
         from bot.pagerduty.api import PagerDutyInterface

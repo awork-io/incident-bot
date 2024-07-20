@@ -294,6 +294,27 @@ class Configuration:
                         "required": False,
                         "type": "dict",
                     },
+                    "notion": {
+                        "required": False,
+                        "type": "dict",
+                        "schema": {
+                            "auto_create_postmortem": {
+                                "required": True,
+                                "type": "boolean",
+                                "empty": False,
+                            },
+                            "parent": {
+                                "required": True,
+                                "type": "string",
+                                "empty": False,
+                            },
+                            "postmortem_template_id": {
+                                "required": False,
+                                "type": "string",
+                                "empty": False,
+                            },
+                        },
+                    },
                     "statuspage": {
                         "required": False,
                         "type": "dict",
@@ -474,6 +495,11 @@ pagerduty_api_username = os.getenv("PAGERDUTY_API_USERNAME", default="")
 pagerduty_api_token = os.getenv("PAGERDUTY_API_TOKEN", default="")
 
 """
+Notion
+"""
+notion_api_key = os.getenv("NOTION_API_KEY", default="")
+
+"""
 External
 """
 zoom_account_id = os.getenv("ZOOM_ACCOUNT_ID", default="")
@@ -570,6 +596,15 @@ def env_check(required_envs: List[str]):
             if os.getenv(var) == "":
                 logger.fatal(
                     f"If enabling the PagerDuty integration, the {var} variable must be set."
+                )
+                sys.exit(1)
+    if "notion" in active.integrations:
+        for var in [
+            "NOTION_API_KEY",
+        ]:
+            if os.getenv(var) == "":
+                logger.fatal(
+                    f"If enabling the Notion integration, the {var} variable must be set."
                 )
                 sys.exit(1)
     if "statuspage" in active.integrations:

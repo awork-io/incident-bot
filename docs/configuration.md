@@ -23,6 +23,7 @@ You can change the following settings in this file:
 You can also enable and configure integrations:
 
 - Confluence
+- Notion
 - Jira
 - Opsgenie
 - PagerDuty
@@ -160,6 +161,13 @@ integrations:
       team: oncalls
   # Simply provide an empty dict to enable PagerDuty
   pagerduty: {}
+  # Enable Notion integration
+  notion:
+    # Set to true to automatically create an postmortem doc
+    auto_create_postmortem: true
+    parent: 00ab6cbbb700499baf82bb680b77334f
+    # Set a template to use for postmortems.
+    postmortem_template_id: 00ab6cbbb700499baf82bb680b77334f
   # Enable Statuspage integration
   statuspage:
     # The public URL of the Statuspage.

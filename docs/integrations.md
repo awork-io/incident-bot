@@ -154,6 +154,25 @@ A message is also sent to the incident channel to let everyone know the page has
 
 ![A message is sent to the incident channel regarding the page](./assets/pager-sent-message.png)
 
+## Notion
+
+When enabled, a postmortem document will be created in Notion with starting information. In general, no additional participation is required to generate this document.
+
+Provide the following environment variables:
+
+- `NOTION_API_KEY` - Notion API key if enabling.
+
+```yaml
+integrations:
+  # Enable Notion integration
+  notion:
+    # Set to true to automatically create an postmortem doc
+    auto_create_postmortem: true
+    parent: 00ab6cbbb700499baf82bb680b77334f
+    # Set a template to use for postmortems.
+    postmortem_template_id: 00ab6cbbb700499baf82bb680b77334f
+```
+
 ## Statuspage
 
 You can integrate with Statuspage to automatically prompt for Statuspage incident creation for new incidents. You can also update them directly from Slack.
