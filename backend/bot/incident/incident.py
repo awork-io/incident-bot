@@ -601,7 +601,7 @@ async def handle_incident_optional_features(
                     )
 
                     pagerduty_interface.page(
-                        priority="low",
+                        priority="high",
                         channel_name=created_channel_details["name"],
                         channel_id=created_channel_details["id"],
                         paging_user="auto",
