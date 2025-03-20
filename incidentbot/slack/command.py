@@ -84,6 +84,17 @@ def handle_root_command(ack, body):
                     logger.error(
                         f"error sending message back to user via slash command invocation: {error}"
                     )
+        case "help":
+            try:
+                slack_web_client.chat_postEphemeral(
+                    channel=command.channel_id,
+                    user=command.user_id,
+                    text=f"To start an incident, simply type `/incidentbot`. To manage an existing incident, type `/incidentbot this` in the incident channel.",
+                )
+            except SlackApiError as error:
+                logger.error(
+                    f"error sending message back to user via slash command invocation: {error}"
+                )
         case _:
             try:
                 slack_web_client.chat_postEphemeral(
