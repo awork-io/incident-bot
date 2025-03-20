@@ -1,8 +1,8 @@
 version: 2
 jobs:
-  build-bot:
+  build:
     environment:
-      IMAGE_NAME: eb129/incident-bot
+      IMAGE_NAME: eb129/incidentbot
     docker:
       - image: cimg/base:current
     steps:
@@ -13,10 +13,10 @@ jobs:
           command: |
             echo 'export IMAGE_TAG=$(cat version)' >> "$BASH_ENV"
             source "$BASH_ENV"
-            docker build --file ./build/Dockerfile --tag $IMAGE_NAME:$IMAGE_TAG .
-  build-bot-arm64:
+            docker build --file Dockerfile --tag $IMAGE_NAME:$IMAGE_TAG .
+  build-arm64:
     environment:
-      IMAGE_NAME: eb129/incident-bot
+      IMAGE_NAME: eb129/incidentbot
     docker:
       - image: cimg/base:current
     resource_class: arm.medium
@@ -28,24 +28,24 @@ jobs:
           command: |
             echo 'export IMAGE_TAG=$(cat version)' >> "$BASH_ENV"
             source "$BASH_ENV"
-            docker build --platform linux/arm64 --file ./build/Dockerfile.arm64 --tag $IMAGE_NAME:$IMAGE_TAG-arm64 .
-  build-bot-lite:
+            docker build --platform linux/arm64 --file Dockerfile.arm64 --tag $IMAGE_NAME:$IMAGE_TAG-arm64 .
+  build-util:
     environment:
-      IMAGE_NAME: eb129/incident-bot
+      IMAGE_NAME: eb129/incidentbot
     docker:
       - image: cimg/base:current
     steps:
       - checkout
       - setup_remote_docker
       - run:
-          name: Build amd64 Lite Docker Image
+          name: Build util image
           command: |
-            echo 'export IMAGE_TAG=$(cat version)' >> "$BASH_ENV"
+            echo 'export IMAGE_TAG=util-$(cat version)' >> "$BASH_ENV"
             source "$BASH_ENV"
-            docker build --file ./build/Dockerfile.lite --tag $IMAGE_NAME:$IMAGE_TAG-lite .
-  build-bot-lite-arm64:
+            docker build --file Dockerfile.util --tag $IMAGE_NAME:$IMAGE_TAG .
+  build-util-arm64:
     environment:
-      IMAGE_NAME: eb129/incident-bot
+      IMAGE_NAME: eb129/incidentbot
     docker:
       - image: cimg/base:current
     resource_class: arm.medium
@@ -53,14 +53,14 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
-          name: Build arm64 Lite Docker Image
+          name: Build util image
           command: |
-            echo 'export IMAGE_TAG=$(cat version)' >> "$BASH_ENV"
+            echo 'export IMAGE_TAG=util-$(cat version)' >> "$BASH_ENV"
             source "$BASH_ENV"
-            docker build --platform linux/arm64 --file ./build/Dockerfile.lite.arm64 --tag $IMAGE_NAME:$IMAGE_TAG-lite-arm64 .
-  publish-bot:
+            docker build --platform linux/arm64 --file Dockerfile.util.arm64 --tag $IMAGE_NAME:$IMAGE_TAG-arm64 .
+  publish:
     environment:
-      IMAGE_NAME: eb129/incident-bot
+      IMAGE_NAME: eb129/incidentbot
     docker:
       - image: cimg/base:current
     steps:
@@ -71,12 +71,12 @@ jobs:
           command: |
             echo 'export IMAGE_TAG=$(cat version)' >> "$BASH_ENV"
             source "$BASH_ENV"
-            docker build --file ./build/Dockerfile --tag $IMAGE_NAME:$IMAGE_TAG .
+            docker build --file Dockerfile --tag $IMAGE_NAME:$IMAGE_TAG .
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker push $IMAGE_NAME:$IMAGE_TAG
-  publish-bot-arm64:
+  publish-arm64:
     environment:
-      IMAGE_NAME: eb129/incident-bot
+      IMAGE_NAME: eb129/incidentbot
     docker:
       - image: cimg/base:current
     resource_class: arm.medium
@@ -88,12 +88,12 @@ jobs:
           command: |
             echo 'export IMAGE_TAG=$(cat version)' >> "$BASH_ENV"
             source "$BASH_ENV"
-            docker build --platform linux/arm64 --file ./build/Dockerfile.arm64 --tag $IMAGE_NAME:$IMAGE_TAG-arm64 .
+            docker build --platform linux/arm64 --file Dockerfile.arm64 --tag $IMAGE_NAME:$IMAGE_TAG-arm64 .
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker push $IMAGE_NAME:$IMAGE_TAG-arm64
-  publish-bot-lite:
+  publish-util:
     environment:
-      IMAGE_NAME: eb129/incident-bot
+      IMAGE_NAME: eb129/incidentbot
     docker:
       - image: cimg/base:current
     steps:
@@ -102,14 +102,14 @@ jobs:
       - run:
           name: Publish amd64 Docker Image to Docker Hub
           command: |
-            echo 'export IMAGE_TAG=$(cat version)' >> "$BASH_ENV"
+            echo 'export IMAGE_TAG=util-$(cat version)' >> "$BASH_ENV"
             source "$BASH_ENV"
-            docker build  --file ./build/Dockerfile.lite --tag $IMAGE_NAME:$IMAGE_TAG-lite .
+            docker build --file Dockerfile.util --tag $IMAGE_NAME:$IMAGE_TAG .
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker push $IMAGE_NAME:$IMAGE_TAG-lite
-  publish-bot-lite-arm64:
+            docker push $IMAGE_NAME:$IMAGE_TAG
+  publish-util-arm64:
     environment:
-      IMAGE_NAME: eb129/incident-bot
+      IMAGE_NAME: eb129/incidentbot
     docker:
       - image: cimg/base:current
     resource_class: arm.medium
@@ -117,74 +117,46 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
-          name: Publish arm64 Docker Image to Docker Hub
+          name: Publish amd64 Docker Image to Docker Hub
           command: |
-            echo 'export IMAGE_TAG=$(cat version)' >> "$BASH_ENV"
+            echo 'export IMAGE_TAG=util-$(cat version)' >> "$BASH_ENV"
             source "$BASH_ENV"
-            docker build --platform linux/arm64 --file ./build/Dockerfile.lite.arm64 --tag $IMAGE_NAME:$IMAGE_TAG-lite-arm64 .
+            docker build --platform linux/arm64 --file Dockerfile.util.arm64 --tag $IMAGE_NAME:$IMAGE_TAG-arm64 .
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker push $IMAGE_NAME:$IMAGE_TAG-lite-arm64
-  publish-docs:
-    environment:
-      IMAGE_NAME: eb129/incident-bot-docs
-    docker:
-      - image: cimg/base:current
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Publish Docker Image to Docker Hub
-          command: |
-            echo 'export IMAGE_TAG=$(cat version)' >> "$BASH_ENV"
-            source "$BASH_ENV"
-            docker build --tag $IMAGE_NAME:$IMAGE_TAG --file ./docs/Dockerfile .
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker push $IMAGE_NAME:$IMAGE_TAG
-  helm:
-    docker:
-      - image: eb129/docker-kubectl:v1.2.0
-    steps:
-      - checkout
-      - run: scripts/helm.sh
+            docker push $IMAGE_NAME:$IMAGE_TAG-arm64
 workflows:
   version: 2
   main:
     jobs:
-      - build-bot:
+      - build:
           filters:
             branches:
               ignore: main
-      - build-bot-arm64:
+      - build-arm64:
           filters:
             branches:
               ignore: main
-      - build-bot-lite:
+      - build-util:
           filters:
             branches:
               ignore: main
-      - build-bot-lite-arm64:
+      - build-util-arm64:
           filters:
             branches:
               ignore: main
-      - publish-bot:
+      - publish:
           filters:
             branches:
               only: main
-      - publish-bot-arm64:
+      - publish-arm64:
           filters:
             branches:
               only: main
-      - publish-bot-lite:
+      - publish-util:
           filters:
             branches:
               only: main
-      - publish-bot-lite-arm64:
+      - publish-util-arm64:
           filters:
             branches:
               only: main
-      - publish-docs:
-          filters:
-            branches:
-              only: main
-      - helm:
-          context: helm-charts-repository
