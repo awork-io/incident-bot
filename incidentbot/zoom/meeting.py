@@ -37,6 +37,7 @@ class ZoomMeeting:
                 "participant_video": True,
                 "use_pmi": False,
                 "waiting_room": False,
+                "auto_recording": "cloud",
             },
             "topic": self.incident,
             "type": 2,
