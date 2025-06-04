@@ -818,6 +818,96 @@ async def set_status(
                                 f"Error sending postmortem update to incident channel: {error}"
                             )
 
+                # Generate postmortem template and create postmortem if enabled for awork
+                # Get normalized description as postmortem title
+                if (
+                    settings.integrations
+                    and settings.integrations.awork
+                    and settings.integrations.awork.enabled
+                    and settings.integrations.awork.auto_create_postmortem
+                ):
+                    from incidentbot.awork.postmortem import (
+                        IncidentPostmortem as AworkIncidentPostmortem,
+                    )
+
+                    postmortem = AworkIncidentPostmortem(
+                        incident=incident,
+                        participants=IncidentDatabaseInterface.list_participants(
+                            incident=incident
+                        ),
+                        timeline=EventLogHandler.read(incident_id=incident.id),
+                        title=f"{datetime.datetime.today().strftime('%Y-%m-%d')} - {incident.slug.upper()} - {incident.description}",
+                    )
+                    postmortem_link = postmortem.create()
+                    
+                    if postmortem_link:
+                        # Create record
+                        IncidentDatabaseInterface.add_postmortem(
+                            parent=incident.id, url=postmortem_link
+                        )
+
+                        # Write event log
+                        EventLogHandler.create(
+                            event="awork Postmortem generated",
+                            incident_id=incident.id,
+                            incident_slug=incident.slug,
+                            source="system",
+                        )
+
+                        postmortem_boilerplate_message_blocks = [
+                            {
+                                "type": "header",
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "{} Incident Report".format(
+                                        settings.icons.get(
+                                            settings.platform
+                                        ).get("postmortem"),
+                                    ),
+                                },
+                            },
+                            {
+                                "type": "section",
+                                "text": {
+                                    "type": "mrkdwn",
+                                    "text": "A starter incident report has been composed in awork Docs based on "
+                                    + "data gathered during this incident.",
+                                },
+                            },
+                            {
+                                "block_id": "buttons",
+                                "type": "actions",
+                                "elements": [
+                                    {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "View awork Incident Report",
+                                        },
+                                        "style": "primary",
+                                        "url": postmortem_link,
+                                        "action_id": "view_postmortem_awork",
+                                    },
+                                ],
+                            },
+                        ]
+
+                        # Send postmortem message to incident channel
+                        try:
+                            result = slack_web_client.chat_postMessage(
+                                channel=incident.channel_id,
+                                blocks=postmortem_boilerplate_message_blocks,
+                                text=postmortem_link,
+                            )
+                            slack_web_client.pins_add(
+                                channel=incident.channel_id,
+                                timestamp=result.get("ts"),
+                            )
+                        except SlackApiError as error:
+                            logger.error(
+                                f"Error sending awork postmortem update to incident channel: {error}"
+                            )
+
             # If PagerDuty incident(s) exist, attempt to resolve them
             if (
                 settings.integrations

@@ -153,6 +153,23 @@ def startup_tasks():
                 )
             )
             sys.exit(1)
+            
+    if (
+        settings.integrations
+        and settings.integrations.awork
+        and settings.integrations.awork.enabled
+    ):
+        from incidentbot.awork.api import AworkApi
+
+        api_test = AworkApi()
+        passes = api_test.test()
+        if not passes:
+            logger.fatal(
+                "Could not verify awork template document exists.\nYou provided: {}".format(
+                    settings.integrations.awork.template_id,
+                )
+            )
+            sys.exit(1)
 
     if (
         settings.integrations

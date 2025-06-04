@@ -211,12 +211,24 @@ class ZoomIntegration(BaseModel):
     enabled: bool = False
 
 
+class AworkIntegration(BaseModel):
+    """
+    Model for the awork field
+    """
+
+    auto_create_postmortem: bool | None = False
+    enabled: bool = False
+    parent: str
+    template_id: str
+
+
 class Integrations(BaseModel):
     """
     Model for the integrations field
     """
 
     atlassian: AtlassianIntegration | None = None
+    awork: AworkIntegration | None = None
     notion: NotionIntegration | None = None
     pagerduty: PagerDutyIntegration | None = None
     zoom: ZoomIntegration | None = None
@@ -379,6 +391,8 @@ class Settings(BaseSettings):
     ATLASSIAN_OPSGENIE_API_TEAM_INTEGRATION_KEY: str | None = None
 
     NOTION_API_KEY: str | None = None
+    
+    AWORK_API_TOKEN: str | None = None
 
     BETTERSTACK_UPTIME_API_TOKEN: str | None = None
 
@@ -523,6 +537,15 @@ class Settings(BaseSettings):
             ):
                 self._check_required_integration_var(
                     "NOTION_API_KEY", self.NOTION_API_KEY, "Notion"
+                )
+                
+            if (
+                self.integrations
+                and self.integrations.awork
+                and self.integrations.awork.enabled
+            ):
+                self._check_required_integration_var(
+                    "AWORK_API_TOKEN", self.AWORK_API_TOKEN, "awork"
                 )
 
             if (

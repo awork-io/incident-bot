@@ -1,15 +1,15 @@
 import json
-from typing import Any, Dict, List
 import requests
-import config
 
-from logger import logger
+from typing import Any, Dict, List
+from incidentbot.configuration.settings import settings
+from incidentbot.logging import logger
 
 
 class NotionApi:
     def __init__(self):
         self.headers = {
-            "Authorization": f"Bearer {config.notion_api_key}",
+            "Authorization": f"Bearer {settings.NOTION_API_KEY}",
             "Notion-Version": "2022-06-28",
             "Content-Type": "application/json"
         }
@@ -64,7 +64,7 @@ class NotionApi:
     def test(self) -> bool:
         try:
             return self.page_exists(
-                config.active.integrations.get("notion").get("parent")
+                settings.integrations.notion.parent
             )
         except Exception as error:
             logger.error(f"Error checking Notion page: {error}")

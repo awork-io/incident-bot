@@ -22,8 +22,8 @@ class IncidentPostmortem:
         timeline: list[IncidentEvent],
         title: str,
     ):
-        self.parent = settings.integrations.atlassian.notion.parent
-        self.template_id = settings.integrations.atlassian.notion.template_id
+        self.parent = settings.integrations.notion.parent
+        self.template_id = settings.integrations.notion.template_id
         self.incident = incident
         self.participants = participants
         self.timeline = timeline
