@@ -18,9 +18,8 @@ from pydantic_settings import (
 from typing import Annotated, Any, Tuple, Type
 from typing_extensions import Self
 
-__version__ = "v2.1.4"
+__version__ = "v2.1.6"
 
-opsgenie_logo_url = "https://i.imgur.com/NjiEBCu.png"
 pagerduty_logo_url = "https://i.imgur.com/IVvdFCV.png"
 statuspage_logo_url = "https://i.imgur.com/v4xmF6u.png"
 
@@ -156,15 +155,6 @@ class JiraIntegration(BaseModel):
     status_mapping: list[dict[str, str]]
 
 
-class OpsgenieIntegration(BaseModel):
-    """
-    Model for the opsgenie field
-    """
-
-    enabled: bool = False
-    team: str
-
-
 class StatuspageIntegrationPermissions(BaseModel):
     """
     Model for the statuspage permissions field
@@ -190,7 +180,6 @@ class AtlassianIntegration(BaseModel):
 
     confluence: ConfluenceIntegration | None = None
     jira: JiraIntegration | None = None
-    opsgenie: OpsgenieIntegration | None = None
     statuspage: StatuspageIntegration | None = None
 
 
@@ -387,8 +376,6 @@ class Settings(BaseSettings):
     ATLASSIAN_API_URL: str | None = None
     ATLASSIAN_API_USERNAME: str | None = None
     ATLASSIAN_API_TOKEN: str | None = None
-    ATLASSIAN_OPSGENIE_API_KEY: str | None = None
-    ATLASSIAN_OPSGENIE_API_TEAM_INTEGRATION_KEY: str | None = None
 
     NOTION_API_KEY: str | None = None
     
@@ -495,25 +482,6 @@ class Settings(BaseSettings):
                 self._check_required_integration_var(
                     "ATLASSIAN_API_TOKEN", self.ATLASSIAN_API_TOKEN, "Jira"
                 )
-
-            if (
-                self.integrations
-                and self.integrations.atlassian
-                and self.integrations.atlassian.opsgenie
-                and self.integrations.atlassian.opsgenie.enabled
-            ):
-                if self.integrations.atlassian.opsgenie.team:
-                    self._check_required_integration_var(
-                        "ATLASSIAN_OPSGENIE_API_TEAM_INTEGRATION_KEY",
-                        self.ATLASSIAN_OPSGENIE_API_TEAM_INTEGRATION_KEY,
-                        "Opsgenie",
-                    )
-                else:
-                    self._check_required_integration_var(
-                        "ATLASSIAN_OPSGENIE_API_KEY",
-                        self.ATLASSIAN_OPSGENIE_API_KEY,
-                        "Opsgenie",
-                    )
 
             if (
                 self.integrations
