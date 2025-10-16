@@ -71,6 +71,10 @@ class IncidentPostmortem:
                 html = html.replace(
                     "!ib-inject-severity", self.incident.severity
                 )
+                # !ib-inject-type
+                html = html.replace(
+                    "!ib-inject-type", self.incident.incident_type or "operational"
+                )
                 # !ib-inject-created-at
                 html = html.replace(
                     "!ib-inject-created-at", str(self.incident.created_at)

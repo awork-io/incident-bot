@@ -198,6 +198,9 @@ def handle_submission(ack, body, client):  # noqa: F811
                 incident_impact=parsed.get(
                     "incident.declare_incident_modal.set_impact"
                 ),
+                incident_type=parsed.get(
+                    "incident.declare_incident_modal.set_incident_type"
+                ),
                 is_security_incident=parsed.get(
                     "incident.declare_incident_modal.set_security_type"
                 )

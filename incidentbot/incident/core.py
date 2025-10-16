@@ -93,6 +93,7 @@ class IncidentRequestParameters(BaseModel):
     incident_components: str
     incident_description: str
     incident_impact: str | None = None
+    incident_type: str | None = "operational"
     is_security_incident: bool | None = False
     private_channel: bool | None = False
     severity: str
@@ -155,6 +156,7 @@ class Incident:
                     components=self.params.incident_components,
                     description=self.params.incident_description,
                     impact=self.params.incident_impact,
+                    incident_type=self.params.incident_type,
                     is_security_incident=self.params.is_security_incident,
                     roles_all=[key for key, _ in settings.roles.items()],
                     severity=self.params.severity,
@@ -223,6 +225,7 @@ class Incident:
                             incident_description=record.description,
                             incident_impact=record.impact,
                             incident_slug=f"{settings.options.channel_name_prefix}-{record.id}",
+                            incident_type=record.incident_type,
                             initial_status=record.status,
                             meeting_link=record.meeting_link,
                             severity=record.severity,

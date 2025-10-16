@@ -157,6 +157,7 @@ class IncidentRecord(SQLModel, table=True):
     has_private_channel: bool | None = False
     id: int = Field(primary_key=True)
     impact: str | None = None
+    incident_type: str | None = None
     is_security_incident: bool | None = None
     last_update_sent: Optional[datetime] = Field(
         sa_column=Column(

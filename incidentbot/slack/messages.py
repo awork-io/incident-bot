@@ -420,6 +420,53 @@ class BlockBuilder:
                 },
             },
             {
+                "block_id": "incident.declare_incident_modal.set_incident_type",
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "*Incident Type*"},
+                "accessory": {
+                    "type": "static_select",
+                    "action_id": "incident.declare_incident_modal.set_incident_type",
+                    "placeholder": {
+                        "type": "plain_text",
+                        "text": "Select an incident type...",
+                        "emoji": True,
+                    },
+                    "initial_option": {
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Operational",
+                        },
+                        "value": "operational",
+                    },
+                    "options": [
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Operational",
+                                "emoji": True,
+                            },
+                            "value": "operational",
+                        },
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Security",
+                                "emoji": True,
+                            },
+                            "value": "security",
+                        },
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": "GDPR (User Data)",
+                                "emoji": True,
+                            },
+                            "value": "gdpr",
+                        },
+                    ],
+                },
+            },
+            {
                 "type": "section",
                 "block_id": "incident.declare_incident_modal.set_additional_comms_channel",
                 "text": {
@@ -1736,6 +1783,7 @@ def digest_base(
     incident_description: str,
     incident_impact: str | None,
     incident_slug: str,
+    incident_type: str | None,
     severity: str,
     status: str,
 ) -> list[dict[str, Any]]:
@@ -1750,6 +1798,18 @@ def digest_base(
         case _:
             header = incident_slug.upper()
             status_format = status.title()
+
+    # Format incident type for display
+    type_display = incident_type or "engineering"
+    match type_display.lower():
+        case "engineering":
+            type_display = "Engineering"
+        case "security":
+            type_display = "Security"
+        case "gdpr":
+            type_display = "GDPR (User Data)"
+        case _:
+            type_display = type_display.title()
 
     return [
         {
@@ -1826,6 +1886,17 @@ def digest_base(
                 ),
             },
         },
+        {
+            "block_id": "digest_channel_type",
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "{} *Type:* {}".format(
+                    settings.icons.get(settings.platform).get("description"),
+                    type_display,
+                ),
+            },
+        },
     ]
 
 
@@ -1838,6 +1909,7 @@ class IncidentChannelDigestNotification:
         incident_description: str,
         incident_impact: str | None,
         incident_slug: str,
+        incident_type: str | None,
         initial_status: str,
         severity: str,
         meeting_link: str | None = None,
@@ -1853,6 +1925,7 @@ class IncidentChannelDigestNotification:
             incident_description=incident_description,
             incident_impact=incident_impact,
             incident_slug=incident_slug,
+            incident_type=incident_type,
             severity=severity,
             status=initial_status,
         )
@@ -1911,6 +1984,7 @@ class IncidentChannelDigestNotification:
         incident_description: str,
         incident_impact: str | None,
         incident_slug: str,
+        incident_type: str | None,
         severity: str,
         status: str,
         meeting_link: str | None = None,
@@ -1926,6 +2000,7 @@ class IncidentChannelDigestNotification:
             incident_description=incident_description,
             incident_impact=incident_impact,
             incident_slug=incident_slug,
+            incident_type=incident_type,
             severity=severity,
             status=status,
         )

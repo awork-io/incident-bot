@@ -85,6 +85,7 @@ class IncidentPostmortem:
             "!ib-inject-components": self.incident.components,
             "!ib-inject-channel": f"https://{slack_workspace_id}.slack.com/archives/{self.incident.channel_id}",
             "!ib-inject-severity": self.incident.severity,
+            "!ib-inject-type": self.incident.incident_type or "operational",
             "!ib-inject-created-at": self._format_datetime(self.incident.created_at),
             "!ib-inject-updated-at": self._format_datetime(self.incident.updated_at),
             "!ib-inject-participants": self._generate_participants_html(),
