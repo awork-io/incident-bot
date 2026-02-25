@@ -1,4 +1,3 @@
-import json
 import requests
 
 from typing import Any, Dict, Optional
@@ -83,7 +82,7 @@ class AworkApi:
                 
             document_space_id = parent_doc.get('documentSpaceId')
             if not document_space_id:
-                logger.error(f"Parent document does not have a documentSpaceId")
+                logger.error("Parent document does not have a documentSpaceId")
                 return None
                 
             logger.info(f"Using documentSpaceId: {document_space_id} from parent document")

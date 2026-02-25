@@ -1,5 +1,4 @@
 import datetime
-import uuid
 
 from incidentbot.configuration.settings import settings
 from incidentbot.awork.api import AworkApi
@@ -11,8 +10,6 @@ from incidentbot.models.database import (
 )
 from incidentbot.slack.client import slack_workspace_id
 from incidentbot.logging import logger
-from requests.exceptions import HTTPError
-from typing import Dict, List, Optional
 
 
 class IncidentPostmortem:
