@@ -579,55 +579,51 @@ def get_slack_user(user_id: str) -> dict | None:
 
 def get_slack_users() -> list[dict[str, Any]]:
     """
-    Retrieves Slack users from a workspace using pagination
+    Retrieves Slack users from a workspace using pagination.
+
+    This processes each page immediately and only stores the minimal fields needed
+    by the application to keep memory bounded.
     """
 
-    users = []
+    users_array = []
+    cursor = None
 
-    try:
-        res = slack_web_client.users_list()
-
-        while res:
-            users += res.get("members")
-
-            if res.get("response_metadata").get("next_cursor") != "":
-                res = slack_web_client.users_list(
-                    cursor=res.get("response_metadata").get("next_cursor")
-                )
-            else:
-                res = None
-    except SlackApiError as error:
-        if error.response.status_code == 429:
-            delay = int(error.response.headers["Retry-After"])
-            logger.warning(
-                f"Rate limited by Slack API. Retrying in {delay} seconds..."
+    while True:
+        try:
+            res = (
+                slack_web_client.users_list(limit=200)
+                if cursor is None
+                else slack_web_client.users_list(limit=200, cursor=cursor)
             )
-            time.sleep(delay)
-            res = slack_web_client.users_list()
-
-            while res:
-                users += res.get("members")
-
-                if res.get("response_metadata").get("next_cursor") != "":
-                    res = slack_web_client.users_list(
-                        cursor=res.get("response_metadata").get("next_cursor")
-                    )
-                else:
-                    res = None
-        else:
+        except SlackApiError as error:
+            if error.response.status_code == 429:
+                delay = int(error.response.headers["Retry-After"])
+                logger.warning(
+                    f"Rate limited by Slack API. Retrying in {delay} seconds..."
+                )
+                time.sleep(delay)
+                continue
             raise error
 
-    users_array = [
-        {
-            "name": user["name"],
-            "real_name": user["profile"]["real_name"],
-            "email": user["profile"].get("email"),
-            "id": user["id"],
-        }
-        for user in users
-    ]
+        members = res.get("members", [])
+        users_array.extend(
+            {
+                "name": user.get("name"),
+                "real_name": user.get("profile", {}).get("real_name"),
+                "email": user.get("profile", {}).get("email"),
+                "id": user.get("id"),
+            }
+            for user in members
+        )
 
-    jdata = sorted(users_array, key=lambda d: d["name"])
+        cursor = res.get("response_metadata", {}).get("next_cursor") or None
+        if cursor is None:
+            break
+
+    jdata = sorted(
+        users_array,
+        key=lambda d: d.get("name") or "",
+    )
 
     logger.info(f"Found {len(users_array)} Slack users")
 
