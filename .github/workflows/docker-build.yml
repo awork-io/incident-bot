@@ -13,13 +13,23 @@ jobs:
         uses: actions/checkout@v4.1.7
       - name: Set image metadata
         id: meta
+        env:
+          ACR_URL: ${{ secrets.ACR_URL }}
         run: |
-          IMAGE_TAG="${{ secrets.ACR_URL }}/incident-bot:${GITHUB_SHA}"
-          REGISTRY="${IMAGE_TAG%%/*}"
+          set -euo pipefail
+          ACR_HOST="${ACR_URL#http://}"
+          ACR_HOST="${ACR_HOST#https://}"
+          ACR_HOST="${ACR_HOST%%/*}"
+          IMAGE_TAG="${ACR_HOST}/incident-bot:${GITHUB_SHA}"
+
           echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
-          echo "registry=${REGISTRY}" >> "$GITHUB_OUTPUT"
+          echo "registry=${ACR_HOST}" >> "$GITHUB_OUTPUT"
       - name: Log in to container registry
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login ${{ steps.meta.outputs.registry }} -u awork --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.meta.outputs.registry }}
+          username: awork
+          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build Docker image
         run: |
           docker build \
