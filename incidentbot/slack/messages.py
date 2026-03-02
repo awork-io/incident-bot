@@ -89,6 +89,24 @@ class BlockBuilder:
                 },
             )
 
+        if (
+            settings.integrations
+            and settings.integrations.gitlab
+            and settings.integrations.gitlab.enabled
+        ):
+            button_el.append(
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"Create GitLab {settings.integrations.gitlab.issue_type.title()}",
+                        "emoji": True,
+                    },
+                    "action_id": "incident_create_gitlab_incident_modal",
+                    "style": "primary",
+                },
+            )
+
         if settings.links:
             for link in settings.links:
                 button_el.extend(
@@ -783,6 +801,49 @@ class BlockBuilder:
         ]
 
     @staticmethod
+    def gitlab_incident_message(
+        id: str, summary: str, link: str
+    ) -> list[dict]:
+        return [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"A GitLab {settings.integrations.gitlab.issue_type.title()} has been created for this incident.",
+                },
+            },
+            {
+                "type": "section",
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": "*Issue ID:* {}".format(id),
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": "*Summary:* {}".format(summary),
+                    },
+                ],
+            },
+            {
+                "type": "actions",
+                "block_id": "gitlab_view_issue",
+                "elements": [
+                    {
+                        "type": "button",
+                        "action_id": "gitlab.view_issue",
+                        "style": "primary",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "View Issue",
+                        },
+                        "url": link,
+                    },
+                ],
+            },
+        ]
+
+    @staticmethod
     def maintenance_window_list(
         maintenance_windows: list[MaintenanceWindowRecord],
     ) -> list[dict[str, Any]]:
@@ -1014,11 +1075,12 @@ class BlockBuilder:
                     ]
                 )
 
-        status_definition = [
+        final_statuses = [
             status
             for status, config in settings.statuses.items()
             if config.final
-        ][0]
+        ]
+        status_definition = final_statuses[0] if final_statuses else "resolved"
 
         blocks = [
             {
@@ -1548,14 +1610,16 @@ class BlockBuilder:
                 created_at = inc["created_at"]
                 updated_at = inc["updated_at"]
                 shortlink = inc["shortlink"]
-                if (
-                    inc["status"]
-                    != [
-                        status
-                        for status, config in settings.statuses.items()
-                        if config.final
-                    ][0]
-                ):
+                final_statuses = [
+                    status
+                    for status, config in settings.statuses.items()
+                    if config.final
+                ]
+                final_status = (
+                    final_statuses[0] if final_statuses else "resolved"
+                )
+
+                if inc["status"] != final_status:
                     formatted_incidents.append(
                         {
                             "type": "section",
@@ -1718,6 +1782,23 @@ class BlockBuilder:
                         "emoji": True,
                     },
                     "action_id": "incident_create_jira_issue_modal",
+                },
+            )
+
+        if (
+            settings.integrations
+            and settings.integrations.gitlab
+            and settings.integrations.gitlab.enabled
+        ):
+            other_buttons.append(
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"➕ Create GitLab {settings.integrations.gitlab.issue_type.title()}",
+                        "emoji": True,
+                    },
+                    "action_id": "incident_create_gitlab_incident_modal",
                 },
             )
 

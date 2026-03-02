@@ -745,15 +745,20 @@ def parse_pinned_message_content(message: str) -> str:
                     ApplicationData.name == "slack_channels"
                 )
             ).one()
-            matched_channel = [
+            matched_channels = [
                 channel
                 for channel in channel_list.json_data
                 if channel.get("id") == match.group(1)
-            ][0]
-            message = message.replace(
-                match.group(0),
-                f"#{matched_channel.get("name")}",
-            )
+            ]
+            if matched_channels:
+                matched_channel = matched_channels[0]
+                message = message.replace(
+                    match.group(0),
+                    f"#{matched_channel.get("name")}",
+                )
+            else:
+                # Keep original format if channel not found
+                pass
 
     for pattern in url_patterns:
         if re.search(pattern, message):
@@ -772,15 +777,20 @@ def parse_pinned_message_content(message: str) -> str:
                     ApplicationData.name == "slack_users"
                 )
             ).one()
-            matched_user = [
+            matched_users = [
                 user
                 for user in user_list.json_data
                 if user.get("id") == match.group(1)
-            ][0]
-            message = message.replace(
-                match.group(0),
-                f"@{matched_user.get("real_name")}",
-            )
+            ]
+            if matched_users:
+                matched_user = matched_users[0]
+                message = message.replace(
+                    match.group(0),
+                    f"@{matched_user.get("real_name")}",
+                )
+            else:
+                # Keep original format if user not found
+                pass
 
     return message
 
@@ -815,6 +825,41 @@ def handle_static_action(ack, body):  # noqa: F811
 
 
 @app.action("jira.view_issue")
+def handle_static_action(ack, body):  # noqa: F811
+    logger.debug(body)
+    ack()
+
+
+"""
+Gitlab
+"""
+
+
+@app.action("gitlab.description_input")
+def handle_static_action(ack, body, logger):  # noqa: F811
+    logger.debug(body)
+    ack()
+
+
+@app.action("gitlab.priority_select")
+def handle_static_action(ack, body):  # noqa: F811
+    logger.debug(body)
+    ack()
+
+
+@app.action("gitlab.summary_input")
+def handle_static_action(ack, body):  # noqa: F811
+    logger.debug(body)
+    ack()
+
+
+@app.action("gitlab.type_select")
+def handle_static_action(ack, body):  # noqa: F811
+    logger.debug(body)
+    ack()
+
+
+@app.action("gitlab.view_issue")
 def handle_static_action(ack, body):  # noqa: F811
     logger.debug(body)
     ack()

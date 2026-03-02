@@ -7,6 +7,7 @@ from incidentbot.models.database import (
     PagerDutyIncidentRecord,
     PostmortemRecord,
     StatuspageIncidentRecord,
+    GitlabIssueRecord,
 )
 from incidentbot.models.slack import User
 from sqlalchemy.exc import NoResultFound
@@ -94,6 +95,32 @@ class IncidentDatabaseInterface:
         except Exception as error:
             logger.error(f"Lookup failed: {error}")
 
+    @classmethod
+    def get_gitlab_incident_record(
+        self,
+        id: int = None,
+    ) -> GitlabIssueRecord:
+        """
+        Read a single incident from the database
+
+        Parameters:
+            id (int): Filter by incident id
+        """
+
+        try:
+            with Session(engine) as session:
+                return session.exec(
+                    select(GitlabIssueRecord).filter(
+                        or_(
+                            GitlabIssueRecord.parent == id,
+                        )
+                    )
+                ).one()
+        except NoResultFound:
+            logger.error(f"GitLab issue not found for incident {id}")
+        except Exception as error:
+            logger.error(f"Lookup failed: {error}")
+
     """
     List
     """
@@ -120,16 +147,20 @@ class IncidentDatabaseInterface:
 
         try:
             with Session(engine) as session:
-                incidents = session.exec(
-                    select(IncidentRecord).filter(
-                        IncidentRecord.status
-                        != [
-                            status
-                            for status, config in settings.statuses.items()
-                            if config.final
-                        ][0]
-                    )
-                ).all()
+                final_statuses = [
+                    status
+                    for status, config in settings.statuses.items()
+                    if config.final
+                ]
+
+                if final_statuses:
+                    incidents = session.exec(
+                        select(IncidentRecord).filter(
+                            IncidentRecord.status != final_statuses[0]
+                        )
+                    ).all()
+                else:
+                    incidents = session.exec(select(IncidentRecord)).all()
 
             return incidents
         except Exception as error:
@@ -170,11 +201,12 @@ class IncidentDatabaseInterface:
             limit (int): How many incidents to return
         """
 
-        final_status = [
+        final_statuses = [
             status
             for status, config in settings.statuses.items()
             if config.final
-        ][0]
+        ]
+        final_status = final_statuses[0] if final_statuses else None
 
         try:
             with Session(engine) as session:
