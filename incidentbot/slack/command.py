@@ -89,7 +89,7 @@ def handle_root_command(ack, body):
                 slack_web_client.chat_postEphemeral(
                     channel=command.channel_id,
                     user=command.user_id,
-                    text=f"To start an incident, simply type `/incidentbot`. To manage an existing incident, type `/incidentbot this` in the incident channel.",
+                    text="To start an incident, simply type `/incidentbot`. To manage an existing incident, type `/incidentbot this` in the incident channel.",
                 )
             except SlackApiError as error:
                 logger.error(

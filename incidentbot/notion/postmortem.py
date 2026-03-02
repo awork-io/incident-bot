@@ -1,17 +1,11 @@
-import datetime
-import uuid
-
 from incidentbot.configuration.settings import settings
 from incidentbot.notion.api import NotionApi
-from incidentbot.exceptions import PostmortemException
 from incidentbot.models.database import (
     IncidentEvent,
     IncidentParticipant,
     IncidentRecord,
 )
 from incidentbot.logging import logger
-from requests.exceptions import HTTPError
-from typing import Dict, List
 
 
 class IncidentPostmortem:
