@@ -196,14 +196,33 @@ def startup_tasks():
         except Exception as error:
             logger.error(f"Error storing auto_page_teams: {error}")
 
+    if (
+        settings.integrations
+        and settings.integrations.gitlab
+        and settings.integrations.gitlab.enabled
+    ):
+        from incidentbot.gitlab.api import GitLabApi
+
+        api_test = GitLabApi()
+        passes = api_test.test()
+        if not passes:
+            logger.fatal(
+                "Could not verify GitLab project exists.\nYou provided: {}".format(
+                    settings.integrations.gitlab.project_id,
+                )
+            )
+            sys.exit(1)
+
 
 if __name__ == "__main__":
     # Database Check
     # --------------------
+
     db_check()
 
     # Startup Tests
     # --------------------
+
     startup_tasks()
 
     # Startup Message
@@ -242,6 +261,7 @@ if __name__ == "__main__":
 
     # API and handler Integration
     # --------------------
+
     from incidentbot.api.main import app
 
     handler.connect()
