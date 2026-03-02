@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Build and Tag Image
+    name: Build, Push, and Deploy Image
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -14,11 +14,43 @@ jobs:
       - name: Set image metadata
         id: meta
         run: |
-          IMAGE_TAG="awork.azurecr.io/incident-bot:${GITHUB_SHA}"
+          IMAGE_TAG="${{ secrets.ACR_URL }}/incident-bot:${GITHUB_SHA}"
+          REGISTRY="${IMAGE_TAG%%/*}"
           echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "registry=${REGISTRY}" >> "$GITHUB_OUTPUT"
+      - name: Log in to container registry
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login ${{ steps.meta.outputs.registry }} -u awork --password-stdin
       - name: Build Docker image
         run: |
           docker build \
             --label org.opencontainers.image.version=${{ steps.meta.outputs.image_tag }} \
             -t ${{ steps.meta.outputs.image_tag }} \
             .
+      - name: Push Docker image
+        run: docker push ${{ steps.meta.outputs.image_tag }}
+      - name: Deploy to develop via Orca
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
+          ORCA_PASSWORD: ${{ secrets.ORCA_PASSWORD }}
+          ORCA_DEPLOYMENT: ${{ vars.ORCA_DEPLOYMENT }}
+          ORCA_CONTAINER: ${{ vars.ORCA_CONTAINER }}
+        run: |
+          set -euo pipefail
+          DEPLOYMENT="${ORCA_DEPLOYMENT:-incident-bot}"
+          CONTAINER="${ORCA_CONTAINER:-incident-bot}"
+          VERSION="${GITHUB_SHA}"
+
+          URL="https://api.cwork.io/tools/orca/set-image?deployment=${DEPLOYMENT}&container=${CONTAINER}&image=${IMAGE_TAG}&version=${VERSION}"
+          echo "Deploying ${IMAGE_TAG} to cwork via ${DEPLOYMENT}/${CONTAINER}"
+
+          STATUS=$(curl -sS -o /tmp/orca_response.txt -w "%{http_code}" -X POST \
+            -u "awork-admin:${ORCA_PASSWORD}" \
+            "$URL" || echo "000")
+
+          if [ "$STATUS" != "200" ]; then
+            echo "Orca deploy failed with HTTP ${STATUS}"
+            cat /tmp/orca_response.txt || true
+            exit 1
+          fi
+
+          echo "Orca deploy request accepted."
